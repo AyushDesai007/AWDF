@@ -1,4 +1,4 @@
-# Practical-6: Task CRUD API with MongoDB and Mongoose
+# Practical-5: Task CRUD API with MongoDB and Mongoose
 
 ## Aim
 
