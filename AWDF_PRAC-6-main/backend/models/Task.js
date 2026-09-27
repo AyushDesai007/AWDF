@@ -20,4 +20,7 @@ const taskSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+taskSchema.index({ createdAt: -1 });
+taskSchema.index({ completed: 1 });
+
 module.exports = mongoose.model('Task', taskSchema);

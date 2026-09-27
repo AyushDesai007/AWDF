@@ -1,35 +1,116 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const compression = require('compression');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const morgan = require('morgan');
 const mongoose = require('mongoose');
 const taskRoutes = require('./routes/tasks');
+const authRoutes = require('./routes/auth');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = Number(process.env.PORT) || 5000;
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/pr6_tasks';
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+].filter(Boolean);
 
-// --- Middleware ---
-// CORS must be enabled so the React dev server (localhost:5173) can call this API.
-app.use(cors());
-app.use(express.json());
+if (!process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET is required in the backend .env file.');
+}
 
-// --- Routes ---
+app.locals.dbMode = 'mongodb';
+app.disable('x-powered-by');
+
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false,
+    contentSecurityPolicy: false,
+  })
+);
+app.use(compression());
+app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+app.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 200,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: 'Too many requests. Please try again later.' },
+  })
+);
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true,
+  })
+);
+app.use(express.json({ limit: '1mb' }));
+
+app.use('/auth', authRoutes);
 app.use('/tasks', taskRoutes);
 
-app.get('/', (req, res) => {
-  res.json({ status: 'PR6 backend running' });
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    dbMode: req.app.locals.dbMode,
+    timestamp: new Date().toISOString(),
+  });
 });
 
-// --- MongoDB connection + server start ---
-mongoose
-  .connect(MONGO_URI)
+app.get('/', (req, res) => {
+  res.json({
+    status: 'PR6 backend running',
+    dbMode: req.app.locals.dbMode,
+    uptime: process.uptime(),
+  });
+});
+
+app.use((req, res) => {
+  res.status(404).json({ message: 'Route not found' });
+});
+
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  const status = err.statusCode || 500;
+  res.status(status).json({
+    message: err.message || 'Internal server error',
+  });
+});
+
+const startServer = () => {
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+};
+
+const connectDatabase = async () => {
+  mongoose.set('strictQuery', true);
+  await mongoose.connect(MONGO_URI, {
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 5000,
+    maxPoolSize: 10,
+    minPoolSize: 2,
+    retryWrites: true,
+  });
+};
+
+connectDatabase()
   .then(() => {
     console.log('MongoDB connected');
-    app.listen(PORT, () => {
-      console.log(`Server running on http://localhost:${PORT}`);
-    });
+    startServer();
   })
   .catch((err) => {
     console.error('MongoDB connection error:', err.message);
-    process.exit(1);
+    console.warn('Starting backend in memory fallback mode so the app remains usable locally.');
+    app.locals.dbMode = 'memory';
+    startServer();
   });
