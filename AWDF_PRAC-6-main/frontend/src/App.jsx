@@ -9,12 +9,14 @@ const loadTaskManager = () => import('./TaskManager');
 const loadProjects = () => import('./pages/Projects');
 const loadAnalytics = () => import('./pages/Analytics');
 const loadContact = () => import('./pages/Contact');
+const loadEventLogs = () => import('./pages/EventLogs');
 
 // Route-based dynamic lazy components
 const TaskManager = lazy(loadTaskManager);
 const Projects = lazy(loadProjects);
 const Analytics = lazy(loadAnalytics);
 const Contact = lazy(loadContact);
+const EventLogs = lazy(loadEventLogs);
 
 function NavigationHeader() {
   const { user, logout } = useAuth();
@@ -22,7 +24,7 @@ function NavigationHeader() {
   return (
     <header className="navbar">
       <div className="navbar-brand">
-        <h1>PR8 — Task Manager</h1>
+        <h1>PR10 — Task Manager</h1>
         <span className="user-badge">{user?.email}</span>
       </div>
       <nav className="nav-links">
@@ -34,6 +36,14 @@ function NavigationHeader() {
           className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
         >
           📋 Tasks
+        </NavLink>
+        <NavLink
+          to="/events"
+          onMouseEnter={loadEventLogs}
+          onFocus={loadEventLogs}
+          className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
+        >
+          ⚡ Event Logs
         </NavLink>
         <NavLink
           to="/projects"
@@ -81,7 +91,7 @@ function AppContent() {
   if (!isAuthenticated) {
     return (
       <div className="app app-narrow">
-        <h1>PR8 — Task Manager</h1>
+        <h1>PR10 — Task Manager</h1>
         <p className="subtitle">Register or log in to manage your tasks</p>
         <AuthForm
           initialMessage={sessionExpired ? 'Your session expired. Please log in again.' : null}
@@ -97,6 +107,7 @@ function AppContent() {
         <Suspense fallback={<LoadingFallback message="Loading page route..." />}>
           <Routes>
             <Route path="/" element={<TaskManager />} />
+            <Route path="/events" element={<EventLogs />} />
             <Route path="/projects" element={<Projects />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/contact" element={<Contact />} />

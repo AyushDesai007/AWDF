@@ -50,13 +50,22 @@ export default function TaskManager() {
   const handleCreate = async (taskInput) => {
     setCreating(true);
     const tempId = `temp-${Date.now()}`;
-    const optimisticTask = { _id: tempId, completed: false, ...taskInput };
+    const assignedUser = taskInput.assignedUser || user?.email || 'admin@example.com';
+    const optimisticTask = {
+      _id: tempId,
+      completed: false,
+      ...taskInput,
+      assignedUser,
+    };
     setTasks((prev) => [optimisticTask, ...prev]);
 
     try {
-      const saved = await createTask(taskInput);
+      const saved = await createTask({
+        ...taskInput,
+        assignedUser,
+      });
       setTasks((prev) => prev.map((t) => (t._id === tempId ? saved : t)));
-      showToast('Task created', 'success');
+      showToast('Task created & "task-created" event emitted!', 'success');
     } catch (err) {
       // roll back the optimistic entry since the backend never confirmed it
       setTasks((prev) => prev.filter((t) => t._id !== tempId));
@@ -107,9 +116,9 @@ export default function TaskManager() {
     <div className="app">
       <div className="app-header">
         <div>
-          <h1>PR7 — Task Manager</h1>
+          <h1>PR10 — Task Manager</h1>
           <p className="subtitle">
-            Logged in as {user?.email || '...'} · JWT-protected
+            Logged in as {user?.email || '...'} · Event-Driven Architecture (Node.js EventEmitter)
           </p>
         </div>
         <button className="btn btn-secondary" onClick={logout}>
@@ -117,7 +126,7 @@ export default function TaskManager() {
         </button>
       </div>
 
-      <TaskForm onCreate={handleCreate} creating={creating} />
+      <TaskForm onCreate={handleCreate} creating={creating} defaultUser={user?.email} />
 
       {loading && <p className="status">Loading tasks...</p>}
       {error && (

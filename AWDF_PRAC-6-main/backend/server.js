@@ -8,6 +8,7 @@ const morgan = require('morgan');
 const mongoose = require('mongoose');
 const taskRoutes = require('./routes/tasks');
 const authRoutes = require('./routes/auth');
+require('./listeners');
 
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
@@ -16,6 +17,8 @@ const allowedOrigins = [
   process.env.FRONTEND_URL,
   'http://localhost:5173',
   'http://127.0.0.1:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5174',
 ].filter(Boolean);
 
 if (!process.env.JWT_SECRET) {
@@ -45,9 +48,13 @@ app.use(
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+      const isLocalDevOrigin =
+        origin && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+
+      if (!origin || isLocalDevOrigin || allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
+
       return callback(new Error('Not allowed by CORS'));
     },
     credentials: true,

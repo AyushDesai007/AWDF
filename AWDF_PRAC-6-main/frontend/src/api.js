@@ -1,10 +1,16 @@
 // Central place for all backend calls.
-// Replaces the Practical 3 GitHub-fetching logic with our own /tasks endpoint.
+// Replaces the Practical 3 GitHub-fetching logic with our own auth + /tasks endpoints.
 
-const BASE_URL = 'http://localhost:5000';
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+export const AUTH_EVENT = 'auth:unauthorized';
 
 async function handleResponse(res) {
   if (!res.ok) {
+    if (res.status === 401) {
+      localStorage.removeItem('token');
+      window.dispatchEvent(new Event(AUTH_EVENT));
+    }
+
     let message = `Request failed with status ${res.status}`;
     try {
       const data = await res.json();
@@ -14,27 +20,66 @@ async function handleResponse(res) {
     }
     throw new Error(message);
   }
-  return res.json();
+
+  const contentType = res.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    return res.json();
+  }
+  return null;
 }
 
-export const getTasks = () =>
-  fetch(`${BASE_URL}/tasks`).then(handleResponse);
+async function request(path, options = {}) {
+  const token = localStorage.getItem('token');
+  const headers = { ...(options.headers || {}) };
+
+  if (!(options.body instanceof FormData)) {
+    headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+  }
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${BASE_URL}${path}`, {
+    ...options,
+    headers,
+  });
+
+  return handleResponse(response);
+}
+
+export const login = (email, password) =>
+  request('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  });
+
+export const register = (email, password) =>
+  request('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  });
+
+export const getMe = () => request('/auth/me');
+
+export const getTasks = () => request('/tasks');
 
 export const createTask = (task) =>
-  fetch(`${BASE_URL}/tasks`, {
+  request('/tasks', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(task),
-  }).then(handleResponse);
+  });
 
 export const updateTask = (id, updates) =>
-  fetch(`${BASE_URL}/tasks/${id}`, {
+  request(`/tasks/${id}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(updates),
-  }).then(handleResponse);
+  });
 
 export const deleteTask = (id) =>
-  fetch(`${BASE_URL}/tasks/${id}`, {
+  request(`/tasks/${id}`, {
     method: 'DELETE',
-  }).then(handleResponse);
+  });
+
+export const getEventLogs = () => request('/tasks/events/logs');
+

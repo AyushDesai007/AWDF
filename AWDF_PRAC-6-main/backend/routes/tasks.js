@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Task = require('../models/Task');
+const taskEvents = require('../events');
+const { getEventLogs } = require('../listeners');
 
 const memoryTasks = [];
 let memoryId = 1;
@@ -18,6 +20,7 @@ const toMemoryTask = (task) => ({
   title: task.title,
   description: task.description || '',
   completed: Boolean(task.completed),
+  assignedUser: task.assignedUser || 'admin@example.com',
   createdAt: task.createdAt || new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 });
@@ -41,6 +44,11 @@ const readTasksFromStore = async (req) => {
   return tasks;
 };
 
+// GET /tasks/events/logs - get EventEmitter log records for inspection
+router.get('/events/logs', (req, res) => {
+  return res.status(200).json(getEventLogs());
+});
+
 // GET /tasks - fetch all tasks
 router.get('/', async (req, res) => {
   try {
@@ -54,25 +62,52 @@ router.get('/', async (req, res) => {
 // POST /tasks - create a task
 router.post('/', async (req, res) => {
   try {
-    const { title, description } = req.body;
+    const { title, description, assignedUser, simulateError } = req.body;
     if (!title || !title.trim()) {
       return res.status(400).json({ message: 'Title is required' });
     }
+
+    const assigned = (assignedUser && assignedUser.trim()) || 'admin@example.com';
 
     if (isMemoryMode(req)) {
       const task = toMemoryTask({
         title: title.trim(),
         description: description ? description.trim() : '',
         completed: false,
+        assignedUser: assigned,
       });
       memoryTasks.unshift(task);
       clearTaskCache();
-      return res.status(201).json(task);
+
+      const apiResponseTime = new Date().toISOString();
+      console.log(`[API] Response sent at ${apiResponseTime}`);
+      res.status(201).json(task);
+
+      taskEvents.emit('task-created', {
+        ...task,
+        apiResponseTime,
+        simulateError: Boolean(simulateError || title.includes('TRIGGER_ERROR')),
+      });
+      return;
     }
 
-    const task = await Task.create({ title: title.trim(), description: description ? description.trim() : '' });
+    const task = await Task.create({
+      title: title.trim(),
+      description: description ? description.trim() : '',
+      assignedUser: assigned,
+    });
     clearTaskCache();
-    return res.status(201).json(task);
+
+    const apiResponseTime = new Date().toISOString();
+    console.log(`[API] Response sent at ${apiResponseTime}`);
+    res.status(201).json(task);
+
+    taskEvents.emit('task-created', {
+      ...(task.toObject ? task.toObject() : task),
+      apiResponseTime,
+      simulateError: Boolean(simulateError || title.includes('TRIGGER_ERROR')),
+    });
+    return;
   } catch (err) {
     return res.status(500).json({ message: 'Failed to create task', error: err.message });
   }
@@ -125,16 +160,28 @@ router.delete('/:id', async (req, res) => {
   try {
     if (isMemoryMode(req)) {
       const initialLength = memoryTasks.length;
+      const targetTask = memoryTasks.find((task) => String(task._id) === String(req.params.id));
       const filteredTasks = memoryTasks.filter((task) => String(task._id) !== String(req.params.id));
 
-      if (filteredTasks.length === initialLength) {
+      if (filteredTasks.length === initialLength || !targetTask) {
         return res.status(404).json({ message: 'Task not found' });
       }
 
       memoryTasks.length = 0;
       memoryTasks.push(...filteredTasks);
       clearTaskCache();
-      return res.status(200).json({ message: 'Task deleted', id: req.params.id });
+
+      const apiResponseTime = new Date().toISOString();
+      console.log(`[API] Delete response sent at ${apiResponseTime}`);
+      res.status(200).json({ message: 'Task deleted', id: req.params.id, title: targetTask.title });
+
+      taskEvents.emit('task-deleted', {
+        id: req.params.id,
+        title: targetTask.title,
+        assignedUser: targetTask.assignedUser || 'admin@example.com',
+        apiResponseTime,
+      });
+      return;
     }
 
     const task = await Task.findByIdAndDelete(req.params.id);
@@ -142,7 +189,18 @@ router.delete('/:id', async (req, res) => {
       return res.status(404).json({ message: 'Task not found' });
     }
     clearTaskCache();
-    return res.status(200).json({ message: 'Task deleted', id: req.params.id });
+
+    const apiResponseTime = new Date().toISOString();
+    console.log(`[API] Delete response sent at ${apiResponseTime}`);
+    res.status(200).json({ message: 'Task deleted', id: req.params.id, title: task.title });
+
+    taskEvents.emit('task-deleted', {
+      id: req.params.id,
+      title: task.title,
+      assignedUser: task.assignedUser || 'admin@example.com',
+      apiResponseTime,
+    });
+    return;
   } catch (err) {
     return res.status(500).json({ message: 'Failed to delete task', error: err.message });
   }
