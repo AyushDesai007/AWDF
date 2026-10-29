@@ -12,7 +12,7 @@ require('./listeners');
 
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/pr6_tasks';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://mongodb:27017/taskdb';
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   'http://localhost:5173',

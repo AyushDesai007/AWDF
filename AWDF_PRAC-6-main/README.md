@@ -9,10 +9,46 @@ slot together with minimal changes.
 ## Structure
 
 ```
-PR6/
-├── backend/     Express + Mongoose API (port 5000)
-└── frontend/    React (Vite) UI (port 5173)
+AWDF_PRAC/
+├── backend/            Express + Mongoose API (port 5000)
+│   ├── Dockerfile
+│   └── .dockerignore
+├── frontend/           React (Vite) UI (port 5173)
+│   ├── Dockerfile
+│   └── .dockerignore
+├── docker-compose.yml  Orchestrates frontend, backend, mongodb on app-network
+├── PR10 README.md      Practical 10 Documentation
+└── PR11 README.md      Practical 11 Docker & Docker Compose Documentation
 ```
+
+## Running the Full Stack with Docker Compose (Practical 11)
+
+To run the entire full stack (Frontend, Backend, and MongoDB) in one single command:
+
+```bash
+docker compose up --build -d
+```
+
+Confirm all 3 containers are running:
+```bash
+docker ps
+```
+
+Access the application:
+- **Frontend UI**: [http://localhost:5173](http://localhost:5173)
+- **Backend API**: [http://localhost:5000](http://localhost:5000)
+- **API Health**: [http://localhost:5000/health](http://localhost:5000/health)
+
+Stop all containers:
+```bash
+docker compose down
+```
+
+For detailed documentation, architectural diagrams, and theoretical viva analysis, see [PR11 README.md](./PR11%20README.md).
+
+---
+
+## Manual / Local Setup (Alternative)
 
 ## 1. Backend setup
 

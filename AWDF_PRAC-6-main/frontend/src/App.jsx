@@ -6,10 +6,10 @@ import LoadingFallback from './components/LoadingFallback';
 
 // Dynamic import factories for lazy loading & predictive preloading
 const loadTaskManager = () => import('./TaskManager');
-const loadProjects = () => import('./pages/Projects');
-const loadAnalytics = () => import('./pages/Analytics');
-const loadContact = () => import('./pages/Contact');
-const loadEventLogs = () => import('./pages/EventLogs');
+const loadProjects = () => import('./Pages/Projects');
+const loadAnalytics = () => import('./Pages/Analytics');
+const loadContact = () => import('./Pages/Contact');
+const loadEventLogs = () => import('./Pages/EventLogs');
 
 // Route-based dynamic lazy components
 const TaskManager = lazy(loadTaskManager);
