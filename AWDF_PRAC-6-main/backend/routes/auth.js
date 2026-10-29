@@ -10,14 +10,26 @@ const memoryUsers = new Map();
 const demoUserEmail = 'admin@example.com';
 const demoUserPassword = 'password123';
 
-const ensureDemoUser = async () => {
-  if (memoryUsers.has(demoUserEmail)) return;
-  const hashedPassword = await bcrypt.hash(demoUserPassword, 10);
-  memoryUsers.set(demoUserEmail, {
-    _id: 'demo-admin',
-    email: demoUserEmail,
-    password: hashedPassword,
-  });
+const ensureDemoUser = async (req) => {
+  if (isMemoryMode(req)) {
+    if (memoryUsers.has(demoUserEmail)) return;
+    const hashedPassword = await bcrypt.hash(demoUserPassword, 10);
+    memoryUsers.set(demoUserEmail, {
+      _id: 'demo-admin',
+      email: demoUserEmail,
+      password: hashedPassword,
+    });
+  } else {
+    try {
+      const existing = await User.findOne({ email: demoUserEmail });
+      if (!existing) {
+        const hashedPassword = await bcrypt.hash(demoUserPassword, 10);
+        await User.create({ email: demoUserEmail, password: hashedPassword });
+      }
+    } catch (e) {
+      // Ignore if already created concurrently
+    }
+  }
 };
 
 const isMemoryMode = (req) => req.app.locals.dbMode === 'memory';
@@ -83,6 +95,7 @@ router.post('/login', validateLogin, async (req, res) => {
       return res.status(200).json({ token, user: { id: user._id, email: user.email } });
     }
 
+    await ensureDemoUser(req);
     const user = await User.findOne({ email: normalizedEmail }).select('+password');
     if (!user) {
       return res.status(401).json({ message: 'Invalid email or password' });
