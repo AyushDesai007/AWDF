@@ -1,5 +1,6 @@
+const path = require('path');
 const isTestEnv = process.env.NODE_ENV === 'test';
-require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 if (isTestEnv) {
   process.env.NODE_ENV = 'test';
 }
