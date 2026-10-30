@@ -10,11 +10,11 @@ describe('Task Management API Automated Tests (CI/CD Practical 12)', () => {
     expect(res.body).toHaveProperty('timestamp');
   });
 
-  // Test 2: GET /tasks endpoint (Deliberately broken for CI failure demonstration)
+  // Test 2: GET /tasks endpoint (Fixed and verified for CI pass)
   test('GET /tasks returns 200', async () => {
     const res = await request(app).get('/tasks');
-    // DELIBERATE FAILURE: changed expected status code to 500 to demonstrate CI Red X
-    expect(res.statusCode).toBe(500);
+    expect(res.statusCode).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
   });
 
   // Test 3: POST /tasks creates a new task (Student Assignment: second automated test)

@@ -1,25 +1,41 @@
-# PR6 — Full Stack Integration (React + Node + MongoDB)
+# Task Management Application — Advanced Web Development Frameworks
 
-**Note:** Your uploaded PR3/PR4/PR5 files came through as empty (0 bytes), so this was
-built as a complete, self-contained implementation of PR6 following the practical spec
-exactly. Drop in your actual PR3–5 code if you have it — the structure (`/tasks` CRUD
-endpoints, `api.js` base URL pattern) matches what the spec describes, so it should
-slot together with minimal changes.
+[![CI Pipeline](https://github.com/AyushDesai007/AWDF/actions/workflows/ci.yml/badge.svg)](https://github.com/AyushDesai007/AWDF/actions/workflows/ci.yml)
 
-## Structure
+## Practicals Overview
+- **Practical 12: CI/CD Pipeline with GitHub Actions** — [PR12 README.md](./PR12%20README.md)
+- **Practical 11: Containerization with Docker & Docker Compose** — [PR11 README.md](./PR11%20README.md)
+- **Practical 10: Asynchronous Processing with EventEmitter** — [PR10 README.md](./PR10%20README.md)
+- **Practical 6–9: React + Node.js + Express + MongoDB Task CRUD**
 
+---
+
+## Practical 12: CI/CD Pipeline Summary
+The repository includes automated Continuous Integration powered by **GitHub Actions** (`.github/workflows/ci.yml`).
+- **Triggers**: On every `push` to `main` and on `pull_request` targeting `main`.
+- **Automated Steps**:
+  1. Checks out repository source code.
+  2. Sets up Node.js 18.
+  3. Installs backend dependencies (`npm install`).
+  4. Runs automated Jest and Supertest test suites (`npm test`).
+- **Test Coverage**:
+  - `GET /health` — Verifies system health check.
+  - `GET /tasks` — Verifies HTTP 200 and task array payload.
+  - `POST /tasks` — Verifies task creation with HTTP 201.
+  - `POST /tasks` validation — Verifies HTTP 400 when title is missing.
+- See detailed logs, screenshots, and viva questions in [PR12 README.md](./PR12%20README.md).
+
+---
+
+## Running the Automated Tests Locally
+
+```bash
+cd backend
+npm install
+npm test
 ```
-AWDF_PRAC/
-├── backend/            Express + Mongoose API (port 5000)
-│   ├── Dockerfile
-│   └── .dockerignore
-├── frontend/           React (Vite) UI (port 5173)
-│   ├── Dockerfile
-│   └── .dockerignore
-├── docker-compose.yml  Orchestrates frontend, backend, mongodb on app-network
-├── PR10 README.md      Practical 10 Documentation
-└── PR11 README.md      Practical 11 Docker & Docker Compose Documentation
-```
+
+---
 
 ## Running the Full Stack with Docker Compose (Practical 11)
 
@@ -44,13 +60,11 @@ Stop all containers:
 docker compose down
 ```
 
-For detailed documentation, architectural diagrams, and theoretical viva analysis, see [PR11 README.md](./PR11%20README.md).
-
 ---
 
 ## Manual / Local Setup (Alternative)
 
-## 1. Backend setup
+### 1. Backend setup
 
 ```bash
 cd backend
@@ -59,18 +73,18 @@ cp .env.example .env    # edit MONGO_URI if needed
 npm run dev              # or: npm start
 ```
 
-Requires a running MongoDB instance (local `mongod` or a MongoDB Atlas connection
-string in `.env`). The server listens on `http://localhost:5000`.
+The server listens on `http://localhost:5000`.
 
 Endpoints:
 | Method | Route        | Description       |
 |--------|--------------|--------------------|
+| GET    | /health      | Health check API   |
 | GET    | /tasks       | List all tasks     |
 | POST   | /tasks       | Create a task      |
 | PUT    | /tasks/:id   | Update a task      |
 | DELETE | /tasks/:id   | Delete a task      |
 
-## 2. Frontend setup
+### 2. Frontend setup
 
 In a **separate terminal**:
 
@@ -80,30 +94,4 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:5173`. Both servers must be running at the same time.
-
-## Features implemented (per PR6 spec)
-
-- CORS enabled on Express so the Vite dev server can call the API
-- Central `src/api.js` with a single `BASE_URL`, replacing the Practical 3 GitHub-fetch logic
-- Full CRUD wired to MongoDB via Mongoose
-- Loading and error states on **every** API call (not just initial GET), with a Retry button
-- UI state updated from the backend response after each write — never assumed
-- **Optimistic UI** on task creation (temp entry shown instantly, rolled back on failure)
-- **Confirmation dialog** before delete
-- **Toast notifications** for success/failure of every operation
-
-## Verifying persistence
-
-1. Create a few tasks, edit one, delete one.
-2. Refresh the browser — the list should reload from MongoDB via `GET /tasks`
-   and show exactly what you left it in.
-
-## Troubleshooting
-
-| Symptom | Cause | Fix |
-|---|---|---|
-| CORS error in console | `cors()` not applied | Confirm `app.use(cors())` runs before routes in `server.js` |
-| `fetch failed` | Backend not running | Start `npm run dev` in `backend/` on port 5000 |
-| Stale UI after edit/delete | State not synced | Already handled here via response-driven state updates |
-| Data gone after refresh | Backend/Mongo not connected | Check `MONGO_URI` and that `mongod` is running |
+Open `http://localhost:5173`.
