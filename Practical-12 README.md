@@ -74,12 +74,14 @@
 ## Demonstration: Pipeline Failure vs. Fixed Success
 
 ### 1. Deliberately Broken Test (Red X ❌)
-- **Commit**: `61b659a` (*feat(ci): set up GitHub Actions CI workflow with deliberate test failure for demonstration*)
+- **Commit SHA**: [`61b659a`](https://github.com/AyushDesai007/AWDF/commit/61b659a40745b145ca0e6a6ff1e8595359a439ce)
+- **Commit Message**: `feat(ci): set up GitHub Actions CI workflow with deliberate test failure for demonstration`
 - **Deliberate Change**: Changed expected HTTP status code of `GET /tasks` from `200` to `500`.
 - **Pipeline Run ID**: `41057337040`
 - **GitHub Actions Run URL**: [https://github.com/AyushDesai007/AWDF/actions/runs/41057337040](https://github.com/AyushDesai007/AWDF/actions/runs/41057337040)
+- **Job URL**: [https://github.com/AyushDesai007/AWDF/actions/runs/41057337040/job/124068068826](https://github.com/AyushDesai007/AWDF/actions/runs/41057337040/job/124068068826)
 - **Status**: Completed with `failure` (Red X ❌)
-- **Log Snippet**:
+- **Execution Log**:
   ```text
   ● Task Management API Automated Tests (CI/CD Practical 12) › GET /tasks returns 200
 
@@ -98,10 +100,16 @@
   Tests:       1 failed, 3 passed, 4 total
   ```
 
+---
+
 ### 2. Corrected & Passing Pipeline (Green Checkmark ✅)
-- **Commit**: Fixed expectation in `backend/tests/api.test.js` to `expect(res.statusCode).toBe(200)`.
+- **Commit SHA**: [`6847e14`](https://github.com/AyushDesai007/AWDF/commit/6847e14a37d24f074ee7c290df38bc5a9a6ef9fd)
+- **Commit Message**: `fix(tests): correct GET /tasks assertion to 200 and document Practical 12 CI pipeline`
+- **Pipeline Run ID**: `41058210899`
+- **GitHub Actions Run URL**: [https://github.com/AyushDesai007/AWDF/actions/runs/41058210899](https://github.com/AyushDesai007/AWDF/actions/runs/41058210899)
+- **Job URL**: [https://github.com/AyushDesai007/AWDF/actions/runs/41058210899/job/124070995651](https://github.com/AyushDesai007/AWDF/actions/runs/41058210899/job/124070995651)
 - **Status**: Completed with `success` (Green Checkmark ✅)
-- **Log Snippet**:
+- **Execution Log**:
   ```text
   PASS tests/api.test.js
     Task Management API Automated Tests (CI/CD Practical 12)
@@ -118,12 +126,25 @@
 
 ---
 
+## Step-by-Step CI Pipeline Execution Table
+
+| Step # | Step Name | Runner Action / Command | Run 1 Result (Deliberate Failure) | Run 2 Result (Corrected) |
+|---|---|---|:---:|:---:|
+| 1 | Set up job | Prepare `ubuntu-latest` virtual environment | ✅ Success | ✅ Success |
+| 2 | Checkout code | `actions/checkout@v4` | ✅ Success | ✅ Success |
+| 3 | Setup Node.js | `actions/setup-node@v4` (Node 18) | ✅ Success | ✅ Success |
+| 4 | Install dependencies | `npm install` | ✅ Success | ✅ Success |
+| 5 | Run tests | `npm test` (`jest --detectOpenHandles --forceExit`) | ❌ Failed (Status 200 ≠ 500) | ✅ Success (All 4 passed) |
+| 6 | Overall Conclusion | Pipeline Status on GitHub | **Red X (Failed)** | **Green Check (Passed)** |
+
+---
+
 ## Key Questions & Analysis
 
 ### 1. What is the difference between Continuous Integration (CI) and Continuous Deployment (CD), and which one does this practical actually demonstrate?
-- **Continuous Integration (CI)**: The software engineering practice where developers regularly merge their code modifications into a central repository, after which automated builds and test suites are executed. The primary purpose is early bug detection and maintaining build stability.
-- **Continuous Deployment (CD)**: The subsequent automated phase where every change that successfully passes the CI build and test pipeline is automatically released and deployed to staging or production environments without manual human intervention.
-- **Practical Demonstration**: This practical demonstrates **Continuous Integration (CI)**. It automates code checkout, runtime setup, dependency installation (`npm install`), and automated test suite execution (`npm test`) on GitHub remote runners upon every push and pull request, reporting pass/fail status.
+- **Continuous Integration (CI)**: The software development methodology where developers frequently integrate code commits into a shared repository. Each commit triggers an automated build and test pipeline to detect integration bugs immediately. The goal is to verify code correctness and build integrity early.
+- **Continuous Deployment (CD)**: The extension of continuous integration where every build that successfully passes the automated test suite is automatically deployed to target production or staging environments without manual human gates.
+- **Practical Demonstration**: This practical specifically demonstrates **Continuous Integration (CI)**. It automatically executes checkout, dependency installation (`npm install`), and the Jest/Supertest suite (`npm test`) on GitHub remote runners upon every push, reporting a definitive pass/fail badge.
 
 ### 2. Why does running tests automatically on every push catch problems earlier than testing manually before a release?
 1. **Immediate Feedback Loop**: Developers obtain automated validation within seconds of pushing a commit. If an error is introduced, the context of the change is still fresh in mind.
