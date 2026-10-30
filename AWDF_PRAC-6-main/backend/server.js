@@ -13,6 +13,7 @@ const morgan = require('morgan');
 const mongoose = require('mongoose');
 const taskRoutes = require('./routes/tasks');
 const authRoutes = require('./routes/auth');
+const aiRoutes = require('./routes/ai');
 require('./listeners');
 
 const app = express();
@@ -76,6 +77,8 @@ app.use(express.json({ limit: '1mb' }));
 
 app.use('/auth', authRoutes);
 app.use('/tasks', taskRoutes);
+app.use('/api/ai', aiRoutes);
+app.use('/ai', aiRoutes);
 
 app.get('/health', (req, res) => {
   res.status(200).json({

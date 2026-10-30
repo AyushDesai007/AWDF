@@ -83,3 +83,9 @@ export const deleteTask = (id) =>
 
 export const getEventLogs = () => request('/tasks/events/logs');
 
+
+export const generateAiDescription = (title) =>
+  request('/api/ai/generate-description', {
+    method: 'POST',
+    body: JSON.stringify({ title }),
+  });

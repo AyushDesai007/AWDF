@@ -18,7 +18,8 @@
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.5.0",
-    "morgan": "^1.10.0"
+    "morgan": "^1.10.0",
+    "openai": "^7.45.1"
   },
   "devDependencies": {
     "jest": "^30.5.2",

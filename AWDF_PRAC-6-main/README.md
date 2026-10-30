@@ -3,6 +3,7 @@
 [![CI Pipeline](https://github.com/AyushDesai007/AWDF/actions/workflows/ci.yml/badge.svg)](https://github.com/AyushDesai007/AWDF/actions/workflows/ci.yml)
 
 ## Practicals Overview
+- **Practical 13: AI API Integration into a Web Application** — [PR13 README.md](./PR13%20README.md)
 - **Practical 12: CI/CD Pipeline with GitHub Actions** — [PR12 README.md](./PR12%20README.md)
 - **Practical 11: Containerization with Docker & Docker Compose** — [PR11 README.md](./PR11%20README.md)
 - **Practical 10: Asynchronous Processing with EventEmitter** — [PR10 README.md](./PR10%20README.md)
