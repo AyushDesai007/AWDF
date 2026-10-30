@@ -10,6 +10,8 @@ const memoryUsers = new Map();
 const demoUserEmail = 'admin@example.com';
 const demoUserPassword = 'password123';
 
+const isMemoryMode = (req) => Boolean(!req || !req.app || req.app.locals.dbMode === 'memory');
+
 const ensureDemoUser = async (req) => {
   if (isMemoryMode(req)) {
     if (memoryUsers.has(demoUserEmail)) return;
@@ -32,8 +34,6 @@ const ensureDemoUser = async (req) => {
   }
 };
 
-const isMemoryMode = (req) => req.app.locals.dbMode === 'memory';
-
 // POST /auth/register
 router.post('/register', validateRegister, async (req, res) => {
   try {
@@ -41,7 +41,7 @@ router.post('/register', validateRegister, async (req, res) => {
     const normalizedEmail = email.toLowerCase();
 
     if (isMemoryMode(req)) {
-      await ensureDemoUser();
+      await ensureDemoUser(req);
       if (memoryUsers.has(normalizedEmail)) {
         return res.status(409).json({ message: 'Email is already registered' });
       }
@@ -77,7 +77,7 @@ router.post('/login', validateLogin, async (req, res) => {
     const normalizedEmail = email.toLowerCase();
 
     if (isMemoryMode(req)) {
-      await ensureDemoUser();
+      await ensureDemoUser(req);
       const user = memoryUsers.get(normalizedEmail);
       if (!user) {
         return res.status(401).json({ message: 'Invalid email or password' });
@@ -120,7 +120,7 @@ router.post('/login', validateLogin, async (req, res) => {
 router.get('/me', auth, async (req, res) => {
   try {
     if (isMemoryMode(req)) {
-      await ensureDemoUser();
+      await ensureDemoUser(req);
       const user = [...memoryUsers.values()].find((entry) => String(entry._id) === String(req.user.id));
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
