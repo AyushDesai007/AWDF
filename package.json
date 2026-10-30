@@ -1,13 +1,10 @@
 {
-  "name": "express-demo",
+  "name": "awdf-task-manager",
   "version": "1.0.0",
-  "description": "",
-  "license": "ISC",
-  "author": "",
-  "type": "commonjs",
-  "main": "index.js",
+  "description": "AWDF Practical Repository - Charotar University of Science and Technology",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "npm --prefix AWDF_PRAC-6-main/backend test"
   },
   "dependencies": {
     "express": "^5.2.1"

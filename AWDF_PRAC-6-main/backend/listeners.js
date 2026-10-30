@@ -18,7 +18,7 @@ function getEventLogs() {
   return [...eventLogs];
 }
 
-// 1. Task Created Listener (with 2-second simulated delay to demonstrate non-blocking async execution)
+// 1. Task Created Listener (with non-blocking async execution)
 taskEvents.on('task-created', (task) => {
   const handlerStartTime = new Date().toISOString();
   console.log(
@@ -39,8 +39,8 @@ taskEvents.on('task-created', (task) => {
     message: `Background notification queued for task "${task.title}"`,
   });
 
-  // Artificial delay (2000ms) simulating external email/push delivery
-  setTimeout(() => {
+  const delay = process.env.NODE_ENV === 'test' ? 10 : 2000;
+  const timer = setTimeout(() => {
     try {
       if (task.simulateError) {
         throw new Error(`Notification dispatch failed for task "${task.title}": Simulated delivery timeout`);
@@ -62,15 +62,18 @@ taskEvents.on('task-created', (task) => {
         apiResponseTime: task.apiResponseTime,
         handlerStartTime,
         handlerFinishTime,
-        delayMs: 2000,
+        delayMs: delay,
         status: 'success',
         message: `Notification email dispatched to ${task.assignedUser || 'admin@example.com'}`,
       });
     } catch (err) {
-      // Forward to error listener without crashing the process
       taskEvents.emit('error', err);
     }
-  }, 2000);
+  }, delay);
+
+  if (timer.unref) {
+    timer.unref();
+  }
 });
 
 // 2. Task Deleted Listener (Supplementary Requirement)
@@ -92,7 +95,8 @@ taskEvents.on('task-deleted', (task) => {
     message: `Cleaning up resources for deleted task "${task.title || task.id}"`,
   });
 
-  setTimeout(() => {
+  const delay = process.env.NODE_ENV === 'test' ? 10 : 1000;
+  const timer = setTimeout(() => {
     const handlerFinishTime = new Date().toISOString();
     console.log(
       `[Deletion Listener] COMPLETED: Cleanup finalized for deleted task "${task.title || task.id}" at ${handlerFinishTime}`
@@ -107,11 +111,15 @@ taskEvents.on('task-deleted', (task) => {
       apiResponseTime: task.apiResponseTime,
       handlerStartTime,
       handlerFinishTime,
-      delayMs: 1000,
+      delayMs: delay,
       status: 'success',
       message: `Audit and notification cleanup completed for task "${task.title || task.id}"`,
     });
-  }, 1000);
+  }, delay);
+
+  if (timer.unref) {
+    timer.unref();
+  }
 });
 
 // 3. Error Event Listener (Supplementary Requirement)

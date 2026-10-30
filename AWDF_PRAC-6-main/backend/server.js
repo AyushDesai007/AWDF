@@ -1,4 +1,9 @@
+const isTestEnv = process.env.NODE_ENV === 'test';
 require('dotenv').config();
+if (isTestEnv) {
+  process.env.NODE_ENV = 'test';
+}
+
 const express = require('express');
 const cors = require('cors');
 const compression = require('compression');
@@ -21,11 +26,16 @@ const allowedOrigins = [
   'http://127.0.0.1:5174',
 ].filter(Boolean);
 
-if (!process.env.JWT_SECRET) {
-  throw new Error('JWT_SECRET is required in the backend .env file.');
+if (process.env.NODE_ENV === 'test') {
+  process.env.JWT_SECRET = process.env.JWT_SECRET || 'ci-test-jwt-secret-key-charusat';
+  app.locals.dbMode = 'memory';
+} else {
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET is required in the backend .env file.');
+  }
+  app.locals.dbMode = 'mongodb';
 }
 
-app.locals.dbMode = 'mongodb';
 app.disable('x-powered-by');
 
 app.use(
@@ -35,7 +45,9 @@ app.use(
   })
 );
 app.use(compression());
-app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+if (process.env.NODE_ENV !== 'test') {
+  app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+}
 app.use(
   rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -110,14 +122,18 @@ const connectDatabase = async () => {
   });
 };
 
-connectDatabase()
-  .then(() => {
-    console.log('MongoDB connected');
-    startServer();
-  })
-  .catch((err) => {
-    console.error('MongoDB connection error:', err.message);
-    console.warn('Starting backend in memory fallback mode so the app remains usable locally.');
-    app.locals.dbMode = 'memory';
-    startServer();
-  });
+if (process.env.NODE_ENV !== 'test') {
+  connectDatabase()
+    .then(() => {
+      console.log('MongoDB connected');
+      startServer();
+    })
+    .catch((err) => {
+      console.error('MongoDB connection error:', err.message);
+      console.warn('Starting backend in memory fallback mode so the app remains usable locally.');
+      app.locals.dbMode = 'memory';
+      startServer();
+    });
+}
+
+module.exports = app;
